@@ -1,5 +1,7 @@
 # OverPath
 
+**[▶ Tarayıcıda aç: ftc-29304.github.io/OverPath](https://ftc-29304.github.io/OverPath/)** (kurulum gerekmez)
+
 FTC için otonom planlayıcı ve Java kod üretici. Otonomu sahanın üzerine çizersin, OverPath robotun çalıştıracağı Java kodunu yazar.
 
 İki modu var. Üst çubuktaki **Enkoder yolları / Zaman tabanlı** düğmesiyle geçiş yapılır:
@@ -70,7 +72,7 @@ Terminalde yazan adresi tarayıcıda aç.
 
 ## Web sitesi (GitHub Pages)
 
-OverPath hiçbir şey kurmadan, GitHub Pages üzerinden tarayıcıda da çalışır. `main` dalına her gönderimde site kendisi güncellenir: testler çalışır, site derlenir ve yayınlanır (`.github/workflows/pages.yml`).
+OverPath hiçbir şey kurmadan, GitHub Pages üzerinden tarayıcıda da çalışır: [ftc-29304.github.io/OverPath](https://ftc-29304.github.io/OverPath/). `main` dalına her gönderimde site kendisi güncellenir: testler çalışır, site derlenir ve yayınlanır (`.github/workflows/pages.yml`).
 
 Siteyi açmak için:
 1. Repo'da **Settings → Pages → Source** kısmından **GitHub Actions**'ı seç.

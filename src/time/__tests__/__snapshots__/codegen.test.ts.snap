@@ -1,0 +1,71 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`codegen > generates the auto 1`] = `
+"package org.firstinspires.ftc.teamcode.autos;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.teamcode.overtime.OverTime;
+
+@Autonomous(name = "Red Left 1", group = "OverTime")
+public class RedLeft1 extends LinearOpMode {
+    @Override
+    public void runOpMode() {
+        DcMotor frontLeftMotor = hardwareMap.get(DcMotor.class, "front_left_drive");
+        DcMotor frontRightMotor = hardwareMap.get(DcMotor.class, "front_right_drive");
+        DcMotor backLeftMotor = hardwareMap.get(DcMotor.class, "back_left_drive");
+        DcMotor backRightMotor = hardwareMap.get(DcMotor.class, "back_right_drive");
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        IMU imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.DOWN,
+                RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+        Servo clawServo = hardwareMap.get(Servo.class, "claw");
+        CRServo intake = hardwareMap.get(CRServo.class, "intake");
+
+        OverTime.Constants constants = new OverTime.Constants();
+        constants.refVoltage = 12.6;
+        constants.rampMs = 150;
+        constants.headingKp = 0.02;
+        constants.headingKi = 0.02;
+        constants.turnKp = 0.012;
+        constants.turnMinPower = 0.12;
+        constants.turnTolDeg = 1.5;
+        constants.turnTimeoutMs = 2500;
+        constants.squareMs = 400;
+        constants.backOffMs = 150;
+        constants.backOffPower = 0.3;
+        constants.autoLimitMs = 30000;
+        OverTime runner = new OverTime(this, frontLeftMotor, frontRightMotor, backLeftMotor, backRightMotor, imu, constants);
+
+        runner.registerCommand("score", () -> {
+        });
+
+        runner.showInit();
+        waitForStart();
+        if (isStopRequested()) return;
+
+        runner.begin(180.0);
+        runner.drive(0.0, 0.5, 600);
+        runner.turnTo(90.0, 0.5);
+        runner.pushWall(OverTime.Face.BACK, 0.3, 1200, true);
+        runner.servo(clawServo, 0.65);
+        runner.motor(intake, -1.0, 800);
+        runner.command("score", 300);
+        runner.drive(-135.0, 0.4, 450);
+        runner.waitMs(250);
+        runner.stop();
+    }
+}
+"
+`;

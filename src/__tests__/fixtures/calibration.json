@@ -1,0 +1,21 @@
+{
+  "kind": "overpath-calibration",
+  "version": 1,
+  "drivetrain": "MECANUM",
+  "profile": "competition",
+  "values": {
+    "minPower": 0.142,
+    "turnMinPower": 0.133,
+    "maxSpeedInPerSec": 43.2,
+    "brakeLinear": 0.1321,
+    "brakeQuadratic": 0.003426,
+    "turnRadiusIn": 8.022,
+    "maxPowerRatePerS": 12.0,
+    "maxPowerDropPerS": 12.0,
+    "alongPct": 0.0222,
+    "strafePct": 0.0187,
+    "turnSigmaDeg": 0.4
+  },
+  "trips": {"forwardIn": [-0.31, 1.2], "strafeIn": [], "headingDeg": [0.4], "tripIn": 48.0},
+  "report": ["frontLeftMotor: OK", "Say \"hi\" \\ there"]
+}

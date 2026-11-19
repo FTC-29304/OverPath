@@ -1,0 +1,105 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateJava > mecanum snippet with the team’s own variable paths 1`] = `
+"double ticksPerRev = 537.7;
+double gearRatio = 1.0;
+double wheelDiameterIn = 3.78;
+double strafeMultiplier = 1.1;
+
+OverPath runner = new OverPath(OverPath.Drive.MECANUM,
+        driveTrain.frontLeftMotor, driveTrain.frontRightMotor, driveTrain.backLeftMotor, driveTrain.backRightMotor, robot.imu,
+        new OverPath.Constants(ticksPerRev, gearRatio, wheelDiameterIn, strafeMultiplier));
+runner.log("BlueLeft30");
+runner.setStartPose(-36.0, -63.0, 90.0);
+
+runner.registerCommand("score", () -> {
+});
+runner.registerCommand("intakeOn", () -> {
+});
+
+runner
+        .servo(clawServo, 0.1)
+        .driveTo(-36.0, -36.0, 0.6)
+            .marker(0.5, "intakeOn")
+        .waitMs(1000)
+        .turnTo(45.0, 0.5)
+        .driveTo(-12.0, -36.0, 0.5)
+            .marker(0.8, () -> clawServo.setPosition(0.8))
+            .timeout(4000)
+        .motorFor(intakeMotor, -1.0, 750)
+        .command("score");
+"
+`;
+
+exports[`generateJava > tank full OpMode declares hardware and never strafes 1`] = `
+"package org.firstinspires.ftc.teamcode.autos;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+import org.firstinspires.ftc.teamcode.overpath.OverPath;
+
+@Autonomous(name = "Blue Left 3+0", group = "OverPath")
+public class BlueLeft30 extends LinearOpMode {
+
+    @Override
+    public void runOpMode() {
+        DcMotorEx frontLeftMotor = hardwareMap.get(DcMotorEx.class, "frontLeftMotor");
+        DcMotorEx frontRightMotor = hardwareMap.get(DcMotorEx.class, "frontRightMotor");
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        IMU imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
+        Servo clawServo = hardwareMap.get(Servo.class, "clawServo");
+        DcMotorEx intakeMotor = hardwareMap.get(DcMotorEx.class, "intakeMotor");
+
+        double ticksPerRev = 537.7;
+        double gearRatio = 1.0;
+        double wheelDiameterIn = 3.78;
+        double strafeMultiplier = 1.1;
+
+        OverPath runner = new OverPath(OverPath.Drive.TANK,
+                frontLeftMotor, frontRightMotor, null, null, imu,
+                new OverPath.Constants(ticksPerRev, gearRatio, wheelDiameterIn, strafeMultiplier));
+        runner.useHardwareMap(hardwareMap);
+        runner.log("BlueLeft30");
+        runner.setStartPose(-36.0, -63.0, 90.0);
+
+        runner.registerCommand("score", () -> {
+        });
+        runner.registerCommand("intakeOn", () -> {
+        });
+
+        runner
+                .servo(clawServo, 0.1)
+                .driveTo(-36.0, -36.0, 0.6)
+                    .marker(0.5, "intakeOn")
+                .waitMs(1000)
+                .turnTo(0.0, 0.5)
+                .driveTo(-12.0, -36.0, 0.5)
+                    .marker(0.8, () -> clawServo.setPosition(0.8))
+                    .timeout(4000)
+                .motorFor(intakeMotor, -1.0, 750)
+                .command("score");
+
+        telemetry.addLine("Place the robot at x -36.0 in, y -63.0 in, heading 90.0 deg");
+        telemetry.addLine("OverPath ready: " + runner.stepCount() + " steps");
+        telemetry.update();
+
+        waitForStart();
+        runner.start();
+        while (opModeIsActive() && runner.isBusy()) {
+            runner.update();
+            runner.addTelemetry(telemetry);
+            telemetry.update();
+        }
+        runner.stop();
+    }
+}
+"
+`;

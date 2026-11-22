@@ -10,11 +10,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class OverTime {
-    public static final String VERSION = "1.2.0";
+    public static final String VERSION = "1.3.0";
 
     public enum Face {
         FRONT(0), BACK(180), LEFT(90), RIGHT(-90);
@@ -55,8 +58,22 @@ public class OverTime {
     private final ElapsedTime autoTimer = new ElapsedTime();
     private final ElapsedTime stepTimer = new ElapsedTime();
     private final ElapsedTime telemetryTimer = new ElapsedTime();
+    private final ElapsedTime clock = new ElapsedTime();
     private final Map<String, Runnable> commands = new HashMap<String, Runnable>();
+    private final List<Later> later = new ArrayList<Later>();
     private Runnable everyLoop = null;
+
+    private static class Later {
+        final Object key;
+        final double atMs;
+        final Runnable action;
+
+        Later(Object key, double atMs, Runnable action) {
+            this.key = key;
+            this.atMs = atMs;
+            this.action = action;
+        }
+    }
 
     private double headingOffset = 0;
     private double targetHeading = 0;
@@ -202,6 +219,7 @@ public class OverTime {
 
     public OverTime motor(DcMotorSimple motor, double power, long ms) {
         if (!canRun("motor")) return this;
+        cancelLater(motor);
         motor.setPower(power);
         if (ms > 0) {
             waitMs(ms);
@@ -212,18 +230,45 @@ public class OverTime {
 
     public OverTime command(String name, long ms) {
         if (!canRun("command " + name)) return this;
-        Runnable r = commands.get(name);
-        if (r == null) {
-            opMode.telemetry.addLine("OverTime: command '" + name + "' is not registered (runner.registerCommand)");
-            opMode.telemetry.update();
-        } else {
-            r.run();
-        }
+        runCommand(name);
         if (ms > 0) waitMs(ms);
         return this;
     }
 
+    public OverTime startMotor(final DcMotorSimple motor, double power, long ms) {
+        if (!canRun("start motor")) return this;
+        cancelLater(motor);
+        motor.setPower(power);
+        if (ms > 0) {
+            later.add(new Later(motor, clock.milliseconds() + ms, new Runnable() {
+                public void run() {
+                    motor.setPower(0);
+                }
+            }));
+        }
+        return this;
+    }
+
+    public OverTime startCommand(String name, long ms, final String thenName) {
+        if (!canRun("start " + name)) return this;
+        cancelLater(name);
+        runCommand(name);
+        if (ms > 0 && thenName != null && !thenName.isEmpty()) {
+            later.add(new Later(name, clock.milliseconds() + ms, new Runnable() {
+                public void run() {
+                    runCommand(thenName);
+                }
+            }));
+        }
+        return this;
+    }
+
+    public int pendingActions() {
+        return later.size();
+    }
+
     public OverTime stop() {
+        finishLater();
         stopDrive();
         stepName = "done";
         sendTelemetry();
@@ -281,8 +326,47 @@ public class OverTime {
         return lastVoltage;
     }
 
+    private void runCommand(String name) {
+        Runnable r = commands.get(name);
+        if (r == null) {
+            opMode.telemetry.addLine("OverTime: command '" + name + "' is not registered (runner.registerCommand)");
+            opMode.telemetry.update();
+        } else {
+            r.run();
+        }
+    }
+
+    private void cancelLater(Object key) {
+        Iterator<Later> it = later.iterator();
+        while (it.hasNext()) {
+            if (it.next().key.equals(key)) it.remove();
+        }
+    }
+
+    private void runDueLater() {
+        if (later.isEmpty()) return;
+        double now = clock.milliseconds();
+        List<Later> due = new ArrayList<Later>();
+        Iterator<Later> it = later.iterator();
+        while (it.hasNext()) {
+            Later l = it.next();
+            if (l.atMs <= now) {
+                due.add(l);
+                it.remove();
+            }
+        }
+        for (Later l : due) l.action.run();
+    }
+
+    private void finishLater() {
+        List<Later> all = new ArrayList<Later>(later);
+        later.clear();
+        for (Later l : all) l.action.run();
+    }
+
     private boolean canRun(String name) {
         stepName = name;
+        runDueLater();
         return active();
     }
 
@@ -347,6 +431,7 @@ public class OverTime {
     }
 
     private void loopTelemetry() {
+        runDueLater();
         if (everyLoop != null) everyLoop.run();
         if (telemetryTimer.milliseconds() < 100) return;
         telemetryTimer.reset();

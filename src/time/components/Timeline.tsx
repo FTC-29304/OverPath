@@ -80,6 +80,29 @@ export function Timeline({ auto, sim, timeMs, setTimeMs, playing, setPlaying }: 
           })}
           {sim.totalMs > AUTO_MS && <div className="tl-limit" style={{ left: `${(AUTO_MS / span) * 100}%` }} />}
         </div>
+        {sim.steps.some((st) => st.bgMs) && (
+          <div className="tl-bg" role="group" aria-label={t('timeline.bg')}>
+            {sim.steps.map((st) => {
+              const step = auto.steps[st.index];
+              if (!step || !st.bgMs || st.startMs >= span) return null;
+              const label = `${st.index + 1}. ${t(`kind.${step.kind}` as MsgKey)} ∥ ${fmtSec(st.bgMs)} s`;
+              return (
+                <button
+                  key={step.id}
+                  className={`tl-block kind-${step.kind} ${step.id === selectedId ? 'selected' : ''}`}
+                  style={{ left: `${(st.startMs / span) * 100}%`, width: `${(Math.min(st.bgMs, span - st.startMs) / span) * 100}%` }}
+                  title={label}
+                  aria-label={label}
+                  onClick={() => {
+                    select(step.id);
+                    setPlaying(false);
+                    setTimeMs(st.startMs);
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
         <input
           type="range"
           min={0}

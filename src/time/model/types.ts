@@ -23,8 +23,8 @@ export type Step =
   | { id: string; kind: 'wall'; face: RobotFace; power: number; ms: number; alignHeading: boolean }
   | { id: string; kind: 'wait'; ms: number }
   | { id: string; kind: 'servo'; mechanismId: string; position: number }
-  | { id: string; kind: 'motor'; mechanismId: string; power: number; ms: number }
-  | { id: string; kind: 'command'; name: string; ms: number };
+  | { id: string; kind: 'motor'; mechanismId: string; power: number; ms: number; background: boolean }
+  | { id: string; kind: 'command'; name: string; ms: number; background: boolean; stopCommand: string };
 
 export type StepKind = Step['kind'];
 
@@ -115,6 +115,7 @@ export interface SimStep {
   sx: number;
   sy: number;
   sh: number;
+  bgMs?: number;
 }
 
 export interface SimResult {

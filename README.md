@@ -1,5 +1,7 @@
 # OverPath
 
+**[▶ Tarayıcıda aç: ftc-29304.github.io/OverPath](https://ftc-29304.github.io/OverPath/)** (kurulum gerekmez)
+
 FTC için otonom planlayıcı ve Java kod üretici. Otonomu sahanın üzerine çizersin, OverPath robotun çalıştıracağı Java kodunu yazar.
 
 İki modu var. Üst çubuktaki **Enkoder yolları / Zaman tabanlı** düğmesiyle geçiş yapılır:
@@ -70,7 +72,7 @@ Terminalde yazan adresi tarayıcıda aç.
 
 ## Web sitesi (GitHub Pages)
 
-OverPath hiçbir şey kurmadan, GitHub Pages üzerinden tarayıcıda da çalışır. `main` dalına her gönderimde site kendisi güncellenir: testler çalışır, site derlenir ve yayınlanır (`.github/workflows/pages.yml`).
+OverPath hiçbir şey kurmadan, GitHub Pages üzerinden tarayıcıda da çalışır: [ftc-29304.github.io/OverPath](https://ftc-29304.github.io/OverPath/). `main` dalına her gönderimde site kendisi güncellenir: testler çalışır, site derlenir ve yayınlanır (`.github/workflows/pages.yml`).
 
 Siteyi açmak için:
 1. Repo'da **Settings → Pages → Source** kısmından **GitHub Actions**'ı seç.
@@ -110,6 +112,10 @@ Bilmen gerekenler:
 5. **Java kodu** sekmesinden otonomu ve `OverTime.java`'yı indir.
 
 Kalibrasyon değişince otonomları yeniden indir, çünkü sayılar üretilen dosyanın içinde.
+
+**Sürerken başka iş yapmak (örneğin intake):** Motor ya da Komut adımında **Beklemeden devam et**'i işaretle. Adım çalışır ve otonom hemen sonraki adıma geçer. Süre bitince motor kendisi durur ya da seçilen komut (örneğin `intake off`) çalışır, sürüşün ortasında olsa bile. Zaman çizelgesinde bu adımlar ikinci satırda görünür. Bunun için robotta OverTime.java 1.3.0 veya daha yenisi olmalı.
+
+**Daha önce yazılmış bir otonomu eklemek:** **Java kodu → Düzenle / Java içe aktar**'a bas. Kodu yapıştır ya da **Dosya aç…** ile `.java` dosyasını seç, sonra **Yeni otonom olarak ekle** ya da **Bu otonoma uygula**'ya bas. Adımlar, otonomun adı ve başlangıç yönü koddan okunur. Anlaşılamayan satırlar numaralarıyla listelenir. Başlangıç konumu (x, y) kodda olmadığı için sahada ayarlanır.
 
 ## Testler
 

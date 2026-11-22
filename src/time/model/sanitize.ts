@@ -60,9 +60,9 @@ export function sanitizeStep(v: unknown): Step | null {
     case 'servo':
       return { id, kind: 'servo', mechanismId: str(v.mechanismId, ''), position: num(v.position, 0.5, 0, 1) };
     case 'motor':
-      return { id, kind: 'motor', mechanismId: str(v.mechanismId, ''), power: num(v.power, 0.5, -1, 1), ms: ms(v.ms, 0) };
+      return { id, kind: 'motor', mechanismId: str(v.mechanismId, ''), power: num(v.power, 0.5, -1, 1), ms: ms(v.ms, 0), background: bool(v.background, false) };
     case 'command':
-      return { id, kind: 'command', name: str(v.name, '', 60), ms: ms(v.ms, 0) };
+      return { id, kind: 'command', name: str(v.name, '', 60), ms: ms(v.ms, 0), background: bool(v.background, false), stopCommand: str(v.stopCommand, '', 60) };
     default:
       return null;
   }

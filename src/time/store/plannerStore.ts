@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { defaultAuto, newId } from '../model/defaults';
 import { mirrorAuto } from '../model/mirror';
 import { sanitizeSaved, type SavedData } from '../model/sanitize';
+import type { ParsedAuto } from '../codegen/parse';
 import type { Auto, Calibration, HardwareConfig, Pose, Step, ViewPrefs } from '../model/types';
 import { defaultLang } from '../i18n/translate';
 
@@ -42,6 +43,7 @@ export interface PlannerState extends SavedData {
   setHw(patch: Partial<HardwareConfig>): void;
   setView(patch: Partial<ViewPrefs>): void;
   restore(data: unknown): boolean;
+  applyParsed(parsed: ParsedAuto, asNew: boolean): void;
 }
 
 const snap = (s: PlannerState): Snapshot => ({ autos: s.autos, activeId: s.activeId });
@@ -150,6 +152,23 @@ export const usePlanner = create<PlannerState>()(
         setCalibration: (patch) => set((s) => ({ calibration: { ...s.calibration, ...patch } })),
         setHw: (patch) => set((s) => ({ hw: { ...s.hw, ...patch } })),
         setView: (patch) => set((s) => ({ view: { ...s.view, ...patch } })),
+        applyParsed: (parsed, asNew) =>
+          commit((s) => {
+            const hw = {
+              ...s.hw,
+              mechanisms: [...s.hw.mechanisms, ...parsed.newMechanisms],
+              commands: [...s.hw.commands, ...parsed.newCommands],
+            };
+            const base = asNew ? defaultAuto(parsed.name ?? `Auto${s.autos.length + 1}`) : active(s);
+            const auto: Auto = {
+              ...base,
+              name: parsed.name ?? base.name,
+              start: parsed.startHeading == null ? base.start : { ...base.start, heading: parsed.startHeading },
+              steps: parsed.steps,
+            };
+            const autos = asNew ? [...s.autos, auto] : s.autos.map((a) => (a.id === auto.id ? auto : a));
+            return { hw, autos, activeId: auto.id, selectedStepId: null };
+          }),
         restore: (data) => {
           if (typeof data !== 'object' || data === null || !Array.isArray((data as { autos?: unknown }).autos)) return false;
           const clean = sanitizeSaved(data, get().view.language);

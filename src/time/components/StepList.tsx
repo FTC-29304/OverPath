@@ -24,6 +24,64 @@ const DIRS: { deg: number; key: MsgKey }[] = [
   { deg: -135, key: 'dir.br' },
 ];
 
+export function guessStopCommand(name: string, commands: string[]): string {
+  const m = /^(.*\s)(in|out|on)$/i.exec(name.trim());
+  if (!m) return '';
+  const off = `${m[1]}off`;
+  return commands.find((c) => c.toLowerCase() === off.toLowerCase()) ?? '';
+}
+
+function BackgroundFields({ step, st, totalMs, t }: { step: Extract<Step, { kind: 'motor' | 'command' }>; st: SimStep | undefined; totalMs: number; t: T }) {
+  const hw = usePlanner((s) => s.hw);
+  const update = (patch: Partial<Step>) => usePlanner.getState().updateStep(step.id, patch);
+  const secs = fmtSec(step.ms);
+  const pastEnd = step.background && st != null && step.ms > 0 && st.startMs + step.ms > totalMs;
+  return (
+    <>
+      <CheckField
+        label={t('f.background')}
+        checked={step.background}
+        onChange={(v) =>
+          update(
+            step.kind === 'command' && v && !step.stopCommand
+              ? { background: v, stopCommand: guessStopCommand(step.name, hw.commands), ms: step.ms || 1000 }
+              : step.kind === 'motor' && v && !step.ms
+                ? { background: v, ms: 1000 }
+                : { background: v },
+          )
+        }
+      />
+      {step.background && step.kind === 'command' && (
+        <div className="row">
+          <label className="field-label">
+            <span>{t('f.then')}</span>
+            <select value={step.stopCommand} data-testid="f-then" onChange={(e) => update({ stopCommand: e.target.value })}>
+              <option value="">{t('f.thenNone')}</option>
+              {[...new Set([...hw.commands, ...(step.stopCommand ? [step.stopCommand] : [])])].map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      {step.background && (
+        <p className="info">
+          {step.kind === 'motor'
+            ? step.ms > 0
+              ? t('info.bgMotor', { s: secs })
+              : t('info.bgMotorOn')
+            : step.ms > 0 && step.stopCommand
+              ? t('info.bgCommand', { s: secs, cmd: step.stopCommand })
+              : t('info.bgCommandNoThen')}
+        </p>
+      )}
+      {pastEnd && <p className="info warn">{t('info.bgPastEnd')}</p>}
+    </>
+  );
+}
+
 export function dirLabel(t: T, dirDeg: number): string {
   const d = DIRS.find((x) => x.deg === wrapDeg(dirDeg));
   return d ? t(d.key) : `${wrapDeg(dirDeg)}°`;
@@ -45,7 +103,7 @@ function StartPose({ auto }: { auto: Auto }) {
   );
 }
 
-function StepFields({ step, st, t }: { step: Step; st: SimStep | undefined; t: T }) {
+function StepFields({ step, st, totalMs, t }: { step: Step; st: SimStep | undefined; totalMs: number; t: T }) {
   const view = usePlanner((s) => s.view);
   const cal = usePlanner((s) => s.calibration);
   const hw = usePlanner((s) => s.hw);
@@ -137,6 +195,7 @@ function StepFields({ step, st, t }: { step: Step; st: SimStep | undefined; t: T
     case 'motor': {
       const options = hw.mechanisms.filter((m) => (step.kind === 'servo' ? m.kind === 'servo' : m.kind !== 'servo'));
       return (
+        <>
         <div className="row">
           <label className="field-label">
             <span>{t('f.mechanism')}</span>
@@ -158,10 +217,13 @@ function StepFields({ step, st, t }: { step: Step; st: SimStep | undefined; t: T
             </>
           )}
         </div>
+        {step.kind === 'motor' && <BackgroundFields step={step} st={st} totalMs={totalMs} t={t} />}
+        </>
       );
     }
     case 'command':
       return (
+        <>
         <div className="row">
           <label className="field-label">
             <span>{t('f.command')}</span>
@@ -176,6 +238,8 @@ function StepFields({ step, st, t }: { step: Step; st: SimStep | undefined; t: T
           </label>
           {ms()}
         </div>
+        <BackgroundFields step={step} st={st} totalMs={totalMs} t={t} />
+        </>
       );
   }
 }
@@ -188,6 +252,8 @@ function summary(t: T, step: Step): string {
       return `${wrapDeg(step.heading)}°`;
     case 'wall':
       return t(`face.${step.face}` as MsgKey);
+    case 'command':
+      return step.background && step.stopCommand ? `${step.name} → ${step.stopCommand}` : step.name;
     default:
       return '';
   }
@@ -239,7 +305,9 @@ export function StepList({ auto, sim, rules }: { auto: Auto; sim: SimResult; rul
                     <span className="step-num">{i + 1}</span>
                     <span className="step-kind">{t(`kind.${step.kind}` as MsgKey)}</span>
                     <span className="step-sum">{summary(t, step)}</span>
-                    <span className="step-time mono">{st ? t('info.time', { s: fmtSec(st.ms) }) : ''}</span>
+                    <span className="step-time mono">
+                      {st?.bgMs ? <span title={t('steps.bg')}>∥ {t('info.time', { s: fmtSec(st.bgMs) })}</span> : st ? t('info.time', { s: fmtSec(st.ms) }) : ''}
+                    </span>
                   </button>
                   <span className="step-btns">
                     <button className="icon" title={t('steps.up')} aria-label={t('steps.up')} disabled={i === 0} onClick={(e) => (e.stopPropagation(), moveStep(step.id, -1))}>
@@ -264,7 +332,7 @@ export function StepList({ auto, sim, rules }: { auto: Auto; sim: SimResult; rul
                 </div>
                 {sel && (
                   <div className="step-body">
-                    <StepFields step={step} st={st} t={t} />
+                    <StepFields step={step} st={st} totalMs={sim.totalMs} t={t} />
                   </div>
                 )}
               </li>

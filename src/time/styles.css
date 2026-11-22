@@ -544,6 +544,13 @@ button:focus-visible {
 .tl-block.kind-servo { background: #10b981; }
 .tl-block.kind-motor { background: #14b8a6; }
 .tl-block.kind-command { background: #ec4899; }
+.tl-bg {
+  position: relative;
+  height: 8px;
+}
+.tl-bg .tl-block {
+  opacity: 0.85;
+}
 .tl-limit {
   position: absolute;
   top: -3px;
@@ -681,6 +688,52 @@ pre.code {
   overflow: auto;
   font-size: 12.5px;
   line-height: 1.5;
+}
+textarea.code-edit {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 60vh;
+  margin-top: 10px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  line-height: 1.5;
+  resize: vertical;
+  tab-size: 4;
+}
+textarea.code-edit:focus-visible {
+  outline: 2px solid var(--accent);
+}
+.button-like {
+  display: inline-block;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.button-like:hover {
+  border-color: var(--accent);
+}
+.button-like:focus-within {
+  outline: 2px solid var(--accent);
+}
+.parse-summary .info {
+  margin: 6px 0;
+}
+ul.skipped {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+ul.skipped code {
+  word-break: break-all;
 }
 
 @media (max-width: 900px) {

@@ -58,11 +58,14 @@ function stepLine(step: Step, hw: HardwareConfig): string | null {
     case 'motor': {
       const m = mechanismFor(hw, step.mechanismId);
       if (!m || m.kind === 'servo') return null;
-      return `runner.motor(${m.javaName}, ${dbl(step.power)}, ${Math.round(step.ms)});`;
+      return `runner.${step.background ? 'startMotor' : 'motor'}(${m.javaName}, ${dbl(step.power)}, ${Math.round(step.ms)});`;
     }
     case 'command':
       if (!step.name) return null;
-      return `runner.command(${javaString(step.name)}, ${Math.round(step.ms)});`;
+      if (step.background && step.ms > 0 && step.stopCommand) {
+        return `runner.startCommand(${javaString(step.name)}, ${Math.round(step.ms)}, ${javaString(step.stopCommand)});`;
+      }
+      return `runner.command(${javaString(step.name)}, ${step.background ? 0 : Math.round(step.ms)});`;
   }
 }
 
@@ -130,7 +133,13 @@ export function generateAuto(auto: Auto, hw: HardwareConfig, cal: Calibration): 
   const used = hw.mechanisms.filter((m) =>
     auto.steps.some((s) => (s.kind === 'servo' || s.kind === 'motor') && s.mechanismId === m.id && (s.kind === 'servo') === (m.kind === 'servo')),
   );
-  const commands = [...new Set(auto.steps.filter((s): s is Extract<Step, { kind: 'command' }> => s.kind === 'command' && !!s.name).map((s) => s.name))];
+  const commands = [
+    ...new Set(
+      auto.steps
+        .filter((s): s is Extract<Step, { kind: 'command' }> => s.kind === 'command' && !!s.name)
+        .flatMap((s) => (s.background && s.ms > 0 && s.stopCommand ? [s.name, s.stopCommand] : [s.name])),
+    ),
+  ];
   const body = [
     ...hardwareBlock(hw, used),
     '',

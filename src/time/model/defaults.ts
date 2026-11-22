@@ -109,8 +109,8 @@ export function blankStep(kind: Step['kind'], defaultPower: number, heading = 0)
     case 'servo':
       return { id, kind, mechanismId: '', position: 0.5 };
     case 'motor':
-      return { id, kind, mechanismId: '', power: 0.5, ms: 500 };
+      return { id, kind, mechanismId: '', power: 0.5, ms: 500, background: false };
     case 'command':
-      return { id, kind, name: '', ms: 0 };
+      return { id, kind, name: '', ms: 0, background: false, stopCommand: '' };
   }
 }

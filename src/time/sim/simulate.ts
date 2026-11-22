@@ -131,9 +131,11 @@ export function simulate(auto: Auto, cal: Calibration, hw: HardwareConfig, view:
         break;
       }
       case 'wait':
+        ms = Math.max(0, step.ms);
+        break;
       case 'motor':
       case 'command':
-        ms = Math.max(0, step.ms);
+        ms = step.background ? 0 : Math.max(0, step.ms);
         break;
       case 'servo':
         ms = 0;
@@ -153,6 +155,7 @@ export function simulate(auto: Auto, cal: Calibration, hw: HardwareConfig, view:
       sx: round(sx),
       sy: round(sy),
       sh: round(sh),
+      ...((step.kind === 'motor' || step.kind === 'command') && step.background && step.ms > 0 ? { bgMs: Math.round(step.ms) } : {}),
     });
     t += ms;
   });

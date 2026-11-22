@@ -298,6 +298,49 @@ public class Harness {
         loop.runner.waitMs(100);
         check(ticks[0] == ticksBefore, "onLoop(null) removes it", "");
 
+        Rig bg = new Rig().start(0);
+        final Motor bgIntake = new Motor();
+        final int[] cmds = {0, 0};
+        final long[] offAt = {-1, -1};
+        bg.runner.registerCommand("intake in", new Runnable() {
+            public void run() { cmds[0]++; }
+        });
+        bg.runner.registerCommand("intake off", new Runnable() {
+            public void run() { cmds[1]++; }
+        });
+        final Op bgOp = bg.op;
+        bg.runner.onLoop(new Runnable() {
+            public void run() {
+                if (offAt[0] < 0 && bgIntake.peak > 0 && bgIntake.power == 0) offAt[0] = bgOp.nowMs;
+                if (offAt[1] < 0 && cmds[1] > 0) offAt[1] = bgOp.nowMs;
+            }
+        });
+        long b0 = bg.op.nowMs;
+        bg.runner.startMotor(bgIntake, 1, 500);
+        check(bg.op.nowMs == b0 && bgIntake.power == 1, "startMotor returns at once and the motor runs", (bg.op.nowMs - b0) + " ms");
+        bg.runner.drive(0, 0.5, 300);
+        check(bgIntake.power == 1 && bg.p.x > 5, "the motor keeps running while the robot drives", String.format("x %.1f", bg.p.x));
+        bg.runner.drive(0, 0.5, 400);
+        check(bgIntake.power == 0 && Math.abs(offAt[0] - b0 - 500) <= 20, "startMotor stops the motor after its time, mid-drive", (offAt[0] - b0) + " ms");
+        long c0 = bg.op.nowMs;
+        bg.runner.startCommand("intake in", 400, "intake off");
+        check(cmds[0] == 1 && cmds[1] == 0 && bg.op.nowMs == c0, "startCommand runs the command and returns at once", "");
+        bg.runner.turnTo(90, 0.5).drive(0, 0.5, 300);
+        check(cmds[1] == 1 && Math.abs(offAt[1] - c0 - 400) <= 20, "the stop command runs after its time, during a turn or drive", (offAt[1] - c0) + " ms");
+        bg.runner.startCommand("intake in", 5000, "intake off");
+        bg.runner.stop();
+        check(cmds[1] == 2 && bg.runner.pendingActions() == 0, "stop() finishes background actions", "");
+
+        Rig re = new Rig().start(0);
+        Motor reMotor = new Motor();
+        re.runner.startMotor(reMotor, 1, 300);
+        re.runner.waitMs(100);
+        re.runner.startMotor(reMotor, -1, 1000);
+        re.runner.waitMs(400);
+        check(reMotor.power == -1 && re.runner.pendingActions() == 1, "a new start on the same motor replaces the old stop", "");
+        re.runner.motor(reMotor, 0.3, 0);
+        check(re.runner.pendingActions() == 0, "a normal motor step cancels the pending stop", "");
+
         Rig spin = new Rig().start(0);
         double rate = spin.runner.spinTest(0.5, 2000);
         check(Math.abs(rate - 150) < 5, "spinTest reports the turn rate", String.format("%.1f deg/s", rate));
